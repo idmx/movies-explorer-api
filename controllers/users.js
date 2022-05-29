@@ -16,19 +16,11 @@ module.exports.getUserInfo = (req, res, next) => {
       }
       res.send(user);
     })
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        throw new BadRequestError('Переданы некорректные данные для получения пользователя.');
-      } else {
-        next(err);
-      }
-    })
     .catch(next);
 };
 
 module.exports.updateUser = (req, res, next) => {
   const { name, email } = req.body;
-
   User.findByIdAndUpdate(
     req.user._id,
     { name, email },
@@ -37,12 +29,16 @@ module.exports.updateUser = (req, res, next) => {
       runValidators: true,
     },
   )
-    .then((user) => res.send(user))
+    .then((user) => {
+      res.send(user)
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         throw new NotFoundError('Пользователь с указанным _id не найден.');
       } else if (err.name === 'ValidationError') {
         throw new BadRequestError('Переданы некорректные данные при обновлении профиля.');
+      } else if (err.code === 11000) {
+        throw new ConflictError('Вы пытаетесь изменить данные чужого аккаунта');
       } else {
         next(err);
       }
@@ -54,39 +50,29 @@ module.exports.createUser = (req, res, next) => {
   const {
     name, email, password,
   } = req.body;
-  User.findOne({ email }).then((oldUser) => {
-    if (oldUser) {
-      throw new ConflictError('Пользователь с таким email существует');
-    }
-    bcrypt.hash(password, 10)
-      .then((hash) => User.create({
-        name, email, password: hash,
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      name, email, password: hash,
+    })
+      .then((user) => {
+        const newUser = user.toObject();
+        delete newUser.password;
+        res.send(newUser);
       })
-        .then((user) => {
-          const newUser = user.toObject();
-          delete newUser.password;
-          res.send(newUser);
-        })
-        .catch((err) => {
-          if (err.name === 'ValidationError') {
-            throw new BadRequestError('Переданы некорректные данные при создании профиля.');
-          } else {
-            next(err);
-          }
-        })
-        .catch(next));
-  })
-    .catch(next);
+      .catch((err) => {
+        if (err.name === 'ValidationError') {
+          throw new BadRequestError('Переданы некорректные данные при создании профиля.');
+        } else if(err.code === 11000) {
+          throw new ConflictError('Пользователь с таким email существует');
+        } else {
+          return next(err);
+        }
+      })
+      .catch(next));
 };
 
 module.exports.logout = (req, res) => {
-  res.cookie('jwt', '', {
-    maxAge: -1,
-    sameSite: 'none',
-    domain: '.nomoredomains.xyz',
-    secure: true,
-  })
-    .send({ message: 'Успешно' });
+  res.clearCookie('jwt').send({ message: 'Успешно' });
 };
 
 module.exports.login = (req, res, next) => {
@@ -108,12 +94,18 @@ module.exports.login = (req, res, next) => {
     })
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
-      res.cookie('jwt', token, {
-        maxAge: 3600000 * 24 * 7,
-        sameSite: 'none',
-        domain: '.nomoreparties.sbs',
-        secure: true,
-      });
+      const cookieOptions = process.env.NODE_ENV === "production"
+        ? {
+          maxAge: 3600000 * 24 * 7,
+          sameSite: 'none',
+          domain: '.nomoreparties.sbs',
+          secure: true,
+        }
+        : {
+          maxAge: 3600000 * 24 * 7,
+          sameSite: 'none'
+        };
+      res.cookie('jwt', token, cookieOptions);
       res.send({ _id: user._id });
     })
     .catch(() => {

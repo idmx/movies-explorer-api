@@ -2,6 +2,7 @@
   "name": "movies-explorer-backend",
   "version": "1.0.0",
   "main": "app.js",
+  "description": "API для сервиса поиска фильмов",
   "scripts": {
     "dev": "nodemon app.js",
     "start": "node app.js",
@@ -13,7 +14,7 @@
     "url": "git+https://github.com/idmx/movies-explorer-api.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Вячеслав Завьялов",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/idmx/movies-explorer-api/issues"

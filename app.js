@@ -9,13 +9,16 @@ const auth = require('./middlewares/auth');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const cors = require('./middlewares/cors');
 const NotFoundError = require('./errors/NotFoundError');
+const usersRoute = require('./routes/users');
+const moviesRoute = require('./routes/movies');
+const signRoute = require('./routes/sign');
 
-const { PORT = 3001 } = process.env;
+const { PORT = 3001, DATA_BASE, NODE_ENV } = process.env;
 const app = express();
 
 app.use(cookieParser());
 
-mongoose.connect('mongodb://localhost:27017/bitfilmsdb', {
+mongoose.connect(NODE_ENV === 'production' ? DATA_BASE : 'mongodb://localhost:27017/bitfilmsdb', {
   useNewUrlParser: true,
 });
 
@@ -26,27 +29,12 @@ app.use(requestLogger);
 
 app.use(cors);
 
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().email().required(),
-    password: Joi.string().required(),
-  }),
-}), login);
-
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    email: Joi.string().email().required(),
-    password: Joi.string().required(),
-  }),
-}), createUser);
+app.use(signRoute);
 
 app.use(auth);
 
-app.use('/signout', logout);
-
-app.use('/users', require('./routes/users'));
-app.use('/movies', require('./routes/movies'));
+app.use(usersRoute);
+app.use(moviesRoute);
 
 app.use('*', (req, res, next) => next(new NotFoundError('Страница не найдена')));
 
