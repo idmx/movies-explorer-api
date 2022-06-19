@@ -30,7 +30,7 @@ module.exports.updateUser = (req, res, next) => {
     },
   )
     .then((user) => {
-      res.send(user)
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -62,7 +62,7 @@ module.exports.createUser = (req, res, next) => {
       .catch((err) => {
         if (err.name === 'ValidationError') {
           throw new BadRequestError('Переданы некорректные данные при создании профиля.');
-        } else if(err.code === 11000) {
+        } else if (err.code === 11000) {
           throw new ConflictError('Пользователь с таким email существует');
         } else {
           return next(err);
@@ -94,7 +94,7 @@ module.exports.login = (req, res, next) => {
     })
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
-      const cookieOptions = process.env.NODE_ENV === "production"
+      const cookieOptions = process.env.NODE_ENV === 'production'
         ? {
           maxAge: 3600000 * 24 * 7,
           sameSite: 'none',
@@ -103,7 +103,7 @@ module.exports.login = (req, res, next) => {
         }
         : {
           maxAge: 3600000 * 24 * 7,
-          sameSite: 'none'
+          sameSite: 'none',
         };
       res.cookie('jwt', token, cookieOptions);
       res.send({ _id: user._id });
