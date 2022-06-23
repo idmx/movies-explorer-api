@@ -1,6 +1,6 @@
 const allowed = [
-  'http://my-mesto.nomoredomains.xyz',
-  'https://my-mesto.nomoredomains.xyz',
+  'http://your-movies.nomoreparties.sbs',
+  'https://your-movies.nomoreparties.sbs',
   'http://localhost:3000',
 ];
 
