@@ -71,8 +71,20 @@ module.exports.createUser = (req, res, next) => {
       .catch(next));
 };
 
+const cookieOptions = process.env.NODE_ENV === 'production'
+  ? {
+    maxAge: 3600000 * 24 * 7,
+    sameSite: 'none',
+    domain: '.nomoreparties.sbs',
+    secure: true,
+  }
+  : {
+    maxAge: 3600000 * 24 * 7,
+    sameSite: 'none',
+  };
+
 module.exports.logout = (req, res) => {
-  res.clearCookie('jwt').send({ message: 'Успешно' });
+  res.clearCookie('jwt', cookieOptions).send({ message: 'Успешно' });
 };
 
 module.exports.login = (req, res, next) => {
@@ -94,17 +106,6 @@ module.exports.login = (req, res, next) => {
     })
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' });
-      const cookieOptions = process.env.NODE_ENV === 'production'
-        ? {
-          maxAge: 3600000 * 24 * 7,
-          sameSite: 'none',
-          domain: '.nomoreparties.sbs',
-          secure: true,
-        }
-        : {
-          maxAge: 3600000 * 24 * 7,
-          sameSite: 'none',
-        };
       res.cookie('jwt', token, cookieOptions);
       res.send({ _id: user._id });
     })
