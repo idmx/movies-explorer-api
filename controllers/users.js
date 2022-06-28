@@ -84,7 +84,7 @@ const cookieOptions = process.env.NODE_ENV === 'production'
   };
 
 module.exports.logout = (req, res) => {
-  res.clearCookie('jwt', cookieOptions).send({ message: 'Успешно' });
+  res.clearCookie('jwt', {...cookieOptions, maxAge: -1}).send({ message: 'Успешно' });
 };
 
 module.exports.login = (req, res, next) => {
