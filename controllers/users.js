@@ -84,18 +84,7 @@ const cookieOptions = process.env.NODE_ENV === 'production'
   };
 
 module.exports.logout = (req, res) => {
-  process.env.NODE_ENV === 'production'
-    ? res.cookie('jwt', '', {
-      maxAge: -1,
-      sameSite: 'none',
-      domain: '.nomoredomains.xyz',
-      secure: true,
-    })
-      .send({ message: 'Успешно' })
-    : {
-      maxAge: -1,
-      sameSite: 'none',
-    };
+  res.clearCookie('jwt', cookieOptions).send({ message: 'Успешно' });
 };
 
 module.exports.login = (req, res, next) => {
